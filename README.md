@@ -33,12 +33,8 @@ from pykos import KOS
 from motion.robot import Robot
 
 async def main():
-    # Create a robot with named joints
-    robot = Robot(joint_map={
-        "shoulder": 1,
-        "elbow": 2,
-        "wrist": 3
-    })
+    # Create a robot using the default joint mapping
+    robot = Robot()
     
     # Connect to robot
     async with KOS() as kos:
@@ -47,8 +43,8 @@ async def main():
         
         # Move joints to specific positions
         await robot.move(kos, {
-            "shoulder": 45,  # degrees
-            "elbow": 30
+            "left_shoulder_pitch": 45,  # degrees
+            "left_elbow": 30
         })
         
         # Get current joint states
@@ -70,8 +66,8 @@ if __name__ == "__main__":
 ```python
 from motion.robot import Robot, RobotConfig
 
-# Default configuration
-robot = Robot(joint_map={"joint1": 1, "joint2": 2})
+# Use with default joint mapping and configuration
+robot = Robot()
 
 # Custom configuration
 config = RobotConfig(
@@ -80,29 +76,29 @@ config = RobotConfig(
     max_torque=50.0,         # Limit maximum torque
     default_velocity=5.0     # Slower default movement
 )
-robot = Robot(joint_map={"joint1": 1, "joint2": 2}, config=config)
+robot = Robot(config=config)
 ```
 
 ### Joint Groups
 
 ```python
-# Define joint mapping
-joint_map = {
-    "left_shoulder": 1,
-    "left_elbow": 2,
-    "right_shoulder": 3,
-    "right_elbow": 4
-}
-
-# Define logical groups
+# Define logical groups using the default joint names
 groups = {
-    "left_arm": ["left_shoulder", "left_elbow"],
-    "right_arm": ["right_shoulder", "right_elbow"],
-    "shoulders": ["left_shoulder", "right_shoulder"]
+    "left_arm": ["left_shoulder_yaw", "left_shoulder_pitch", "left_elbow"],
+    "right_arm": ["right_shoulder_yaw", "right_shoulder_pitch", "right_elbow"],
+    "grippers": ["left_gripper", "right_gripper"]
 }
 
-# Create robot with groups
-robot = Robot(joint_map=joint_map, groups=groups)
+# Create robot with default joint mapping and custom groups
+robot = Robot(groups=groups)
+
+# You can also specify a custom joint mapping if needed
+custom_joint_map = {
+    "base": 1,
+    "arm": 2,
+    "wrist": 3
+}
+custom_robot = Robot(joint_map=custom_joint_map)
 
 # Work with a specific group
 left_arm = robot.get_group("left_arm")

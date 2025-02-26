@@ -7,23 +7,17 @@ from pykos import KOS
 from motion.robot import Robot
 
 async def main():
-    # Define joint mapping for your robot
-    joint_map = {
-        "left_shoulder_yaw": 11,
-        "left_shoulder_pitch": 12,
-        "left_elbow": 13,
-        "left_gripper": 14,
-        # ... other joints
-    }
-    
     # Define joint groups (optional)
     groups = {
         "left_arm": ["left_shoulder_yaw", "left_shoulder_pitch", "left_elbow"],
-        "grippers": ["left_gripper"],
+        "right_arm": ["right_shoulder_yaw", "right_shoulder_pitch", "right_elbow"],
+        "grippers": ["left_gripper", "right_gripper"],
+        "legs": ["left_hip_yaw", "left_hip_roll", "left_hip_pitch", "left_knee", "left_ankle",
+                "right_hip_yaw", "right_hip_roll", "right_hip_pitch", "right_knee", "right_ankle"],
     }
     
-    # Create robot instance
-    robot = Robot(joint_map=joint_map, groups=groups)
+    # Create robot instance with default joint mapping
+    robot = Robot(groups=groups)
     
     # Connect to KOS
     async with KOS(ip="localhost", port=50051) as kos:

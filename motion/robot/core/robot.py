@@ -3,6 +3,28 @@ from dataclasses import dataclass
 from pykos import KOS
 from .joint import Joint, JointGroup, JointState
 
+# Default mapping from actuator IDs to joint names
+ACTUATOR_ID_TO_NAME: Dict[int, str] = {
+    11: "left_shoulder_yaw",
+    12: "left_shoulder_pitch",
+    13: "left_elbow",
+    14: "left_gripper",
+    21: "right_shoulder_yaw",
+    22: "right_shoulder_pitch",
+    23: "right_elbow",
+    24: "right_gripper",
+    31: "left_hip_yaw",
+    32: "left_hip_roll",
+    33: "left_hip_pitch",
+    34: "left_knee",
+    35: "left_ankle",
+    41: "right_hip_yaw",
+    42: "right_hip_roll",
+    43: "right_hip_pitch",
+    44: "right_knee",
+    45: "right_ankle",
+}
+
 @dataclass
 class RobotConfig:
     """Default configuration for robot joints.
@@ -62,20 +84,23 @@ class Robot:
     
     def __init__(
         self,
-        joint_map: Dict[str, int],
+        joint_map: Optional[Dict[str, int]] = None,
         config: Optional[RobotConfig] = None,
         groups: Optional[Dict[str, List[str]]] = None
     ):
         """Initialize robot interface.
         
         Args:
-            joint_map: Mapping of joint names to actuator IDs
+            joint_map: Mapping of joint names to actuator IDs. If None, uses default mapping.
             config: Robot configuration defaults
             groups: Optional mapping of group names to lists of joint names
             
         Examples:
             ```python
-            # Create a robot with three joints
+            # Create a robot with default joints
+            robot = Robot()
+            
+            # Create a robot with custom joints
             robot = Robot({
                 "base": 1,
                 "shoulder": 2,
@@ -93,6 +118,12 @@ class Robot:
             ```
         """
         self.config = config or RobotConfig()
+        
+        # Use default joint mapping if none provided
+        if joint_map is None:
+            # Invert the ACTUATOR_ID_TO_NAME mapping to create joint_map
+            joint_map = {name: actuator_id for actuator_id, name in ACTUATOR_ID_TO_NAME.items()}
+            
         self.joints = {name: Joint(name, actuator_id) for name, actuator_id in joint_map.items()}
         
         # Create default groups
