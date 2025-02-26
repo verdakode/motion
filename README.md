@@ -1,6 +1,6 @@
 # Motion Library
 
-A robot motion control library by Verda Korzeniewski.
+A robot motion control library
 
 ## Installation
 
@@ -43,17 +43,8 @@ import asyncio
 from pykos import KOS
 from motion.robot import Robot
 
-# Define joint mapping for your robot
-joint_map = {
-    "left_shoulder_yaw": 11,
-    "left_shoulder_pitch": 12,
-    "left_elbow": 13,
-    "left_gripper": 14,
-    # ... other joints
-}
-
 # Create robot instance
-robot = Robot(joint_map=joint_map)
+robot = Robot()
 
 async def main():
     # Connect to KOS
