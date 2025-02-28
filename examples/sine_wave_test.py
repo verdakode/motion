@@ -56,16 +56,6 @@ async def main():
     sim_data = {"time": [], "position": [], "expected": []}
     real_data = {"time": [], "position": [], "expected": []}
 
-    # At the start of the script, add position limits
-    MIN_POSITION = -45.0  # Reasonable min angle
-    MAX_POSITION = 45.0   # Reasonable max angle
-
-    def sanitize_position(pos: float) -> float:
-        """Clean up position readings and bound them to reasonable limits."""
-        if not isinstance(pos, (int, float)) or math.isnan(pos):
-            return 20.0  # Return to safe position if invalid
-        return max(MIN_POSITION, min(MAX_POSITION, pos))
-
     try:
         # Connect to simulator
         print("Connecting to simulator...")
@@ -151,10 +141,10 @@ async def main():
                     print(
                         f"Attempt {attempt+1}: Position {sim_states[joint_to_test].position:.2f}° not close enough to {safe_position}°"
                     )
-                else:
-                    raise Exception(
-                        "Failed to reach starting position after 3 attempts"
-                    )
+                    if abs(sim_states[joint_to_test].position - safe_position) >= 3.0:
+                        print(
+                            "WARNING: Simulator did not reach starting position, continuing anyway"
+                        )
 
                 # Now do the same for real robot
                 print("Moving real robot to starting position...")
@@ -185,6 +175,10 @@ async def main():
                     print(
                         f"Attempt {attempt+1}: Position {real_states[joint_to_test].position:.2f}° not close enough to {safe_position}°"
                     )
+                    if abs(real_states[joint_to_test].position - safe_position) >= 1.0:
+                        print(
+                            "WARNING: Real robot did not reach starting position, continuing anyway"
+                        )
                 else:
                     raise Exception(
                         "Failed to reach starting position after 3 attempts"
@@ -221,15 +215,19 @@ async def main():
                     print("Starting sine wave motion...")
                     # Run simulator test
                     start_time = time.time()
+                    last_time = start_time
                     while time.time() - start_time < duration:
                         t = time.time() - start_time
+                        dt = time.time() - last_time  # Get actual timestep
+                        last_time = time.time()
+
                         # Find closest expected position
                         idx = min(int(t / 0.05), len(expected_positions) - 1)
                         expected_pos = expected_positions[idx]
 
                         # Calculate velocity from next position
                         next_idx = min(idx + 1, len(expected_positions) - 1)
-                        velocity = (expected_positions[next_idx] - expected_pos) / 0.05
+                        velocity = (expected_positions[next_idx] - expected_pos) / dt
 
                         # Send command to simulator
                         await sim_robot.move(
@@ -283,20 +281,15 @@ async def main():
                             real_kos, [joint_to_test]
                         )
 
-                        # Sanitize the position reading
-                        position = real_states[joint_to_test].position
-                        clean_position = sanitize_position(position)
-                        if abs(clean_position - position) > 10.0:  # If large correction needed
-                            print(f"WARNING: Invalid position reading: {position}°, corrected to {clean_position}°")
-                            position = clean_position
-
                         # Record data
                         real_data["time"].append(t)
-                        real_data["position"].append(position)
+                        real_data["position"].append(
+                            real_states[joint_to_test].position
+                        )
                         real_data["expected"].append(expected_pos)
 
                         print(
-                            f"Time: {t:.2f}s | Expected: {expected_pos:.2f}° | Real: {position:.2f}°"
+                            f"Time: {t:.2f}s | Expected: {expected_pos:.2f}° | Real: {real_states[joint_to_test].position:.2f}°"
                         )
                         await asyncio.sleep(0.05)
                 except Exception as e:

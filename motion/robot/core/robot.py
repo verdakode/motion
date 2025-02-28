@@ -40,7 +40,6 @@ class RobotConfig:
             sim_gains=(80, 40),  # Lower kp, kd for simulator
             real_gains=(24, 20),  # Lower gains for real robot
             max_torque=50.0,      # Limit maximum torque
-            default_velocity=5.0  # Slower default movement
         )
 
         # Access configuration values
@@ -49,10 +48,9 @@ class RobotConfig:
         ```
     """
 
-    sim_gains: tuple[float, float] = (100, 50)  # kp, kd for simulator
+    sim_gains: tuple[float, float] = (32, 32)  # kp, kd for simulator
     real_gains: tuple[float, float] = (32, 32)  # kp, kd for real robot
     max_torque: float = 100.0
-    default_velocity: float = 30.0
 
 
 class Robot:
@@ -80,7 +78,7 @@ class Robot:
         robot = Robot(joint_map=joint_map, groups=groups)
 
         # Or use custom configuration
-        config = RobotConfig(max_torque=50.0, default_velocity=5.0)
+        config = RobotConfig(max_torque=50.0)
         robot = Robot(joint_map=joint_map, config=config, groups=groups)
         ```
     """
@@ -180,7 +178,6 @@ class Robot:
         self,
         kos: KOS,
         positions: Dict[str, float],
-        velocity: Optional[float] = None,
         wait: bool = True,
     ) -> None:
         """Move specified joints to target positions.
@@ -188,7 +185,6 @@ class Robot:
         Args:
             kos: KOS client instance
             positions: Mapping of joint names to target positions
-            velocity: Optional velocity override (uses default if None)
             wait: Whether to wait for movement to complete
 
         Examples:
@@ -199,11 +195,11 @@ class Robot:
                 "elbow": 0.5
             })
 
-            # Move joints with custom velocity
+            # Move joints with custom 
             await robot.move(kos, {
                 "shoulder": 0.0,
                 "elbow": 0.0
-            }, velocity=5.0)
+            }, )
 
             # Move without waiting for completion
             await robot.move(kos, {"wrist": 0.7}, wait=False)
@@ -221,7 +217,6 @@ class Robot:
                     {
                         "actuator_id": self.joints[joint_name].actuator_id,
                         "position": position,
-                        "velocity": velocity or self.config.default_velocity,
                     }
                 )
 
@@ -250,7 +245,7 @@ class Robot:
             ```
         """
         positions = {name: 0.0 for name in self.joints}
-        await self.move(kos, positions, velocity)
+        await self.move(kos, positions)
 
     async def get_states(
         self, kos: KOS, joint_names: Optional[List[str]] = None
